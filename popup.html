@@ -20,7 +20,7 @@
     .infoWrapper { position: relative; display: inline-block; }
     #infoIcon { font-size: 1.3em; color: #0074d9; cursor: pointer; margin-left: 8px; user-select: none; transition: color 0.2s; }
     #infoIcon:focus { outline: none; color: #005fa3; }
-    #infoTooltip { display: block; opacity: 0; pointer-events: none; position: absolute; top: 28px; right: 0; width: 320px; background: rgba(255,255,255,0.35); color: #222; border: 1px solid #b3d8ff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); padding: 18px 20px; z-index: 100; font-size: 1em; line-height: 1.6; backdrop-filter: blur(12px) saturate(1.5); transition: opacity 0.25s cubic-bezier(.4,0,.2,1); font-weight: 400; text-shadow: 0 1px 2px rgba(255,255,255,0.2); box-sizing: border-box; }
+    #infoTooltip { display: block; opacity: 0; pointer-events: none; position: absolute; top: 28px; right: 0; width: 320px; background: rgba(255,255,255,0.35); color: #222; border: 1px solid #b3d8ff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); padding: 18px 20px; z-index: 1000; font-size: 1em; line-height: 1.6; backdrop-filter: blur(12px) saturate(1.5); transition: opacity 0.25s cubic-bezier(.4,0,.2,1); font-weight: 400; text-shadow: 0 1px 2px rgba(255,255,255,0.2); box-sizing: border-box; }
     .infoWrapper.show #infoTooltip { opacity: 1; pointer-events: auto; }
     #infoTooltip b { color: #0074d9; font-weight: 600; }
     #infoTooltip ul { padding-left: 18px; margin: 8px 0 0 0; }
@@ -36,7 +36,8 @@
     .title { font-weight: bold; color: #0074d9; }
     .url { font-size: 0.93em; color: #0074d9; word-break: break-all; max-width: 180px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: bottom; }
     .timestamp { font-size: 0.85em; color: #888; }
-    .snippet { margin-top: 5px; font-size: 0.97em; color: #333; }
+    .view-timeline-btn { background: #0074d9; color: #fff; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.8em; cursor: pointer; margin-left: 8px; transition: background 0.2s; }
+    .view-timeline-btn:hover { background: #005fa3; }
     .crossout-btn { background: none; border: none; color: #e74c3c; font-size: 1.2em; cursor: pointer; margin-left: 8px; margin-top: 2px; transition: color 0.2s; }
     .crossout-btn:hover { color: #c0392b; }
     #summary { margin-top: 20px; padding: 12px; background: rgba(255,255,255,0.45); border: 1px solid #ccc; border-radius: 8px; display: none; font-size: 1em; color: #222; }
@@ -49,65 +50,12 @@
     .devWrapper { position: relative; display: inline-block; margin-left: 8px; }
     #devIcon { font-size: 1.3em; color: #888; cursor: pointer; user-select: none; transition: color 0.2s; }
     #devIcon:focus { outline: none; color: #e67e22; }
-    #devTooltip { display: block; opacity: 0; pointer-events: none; position: absolute; top: 28px; right: 0; width: 340px; background: rgba(255,255,255,0.35); color: #222; border: 1px solid #e67e22; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); padding: 18px 20px; z-index: 100; font-size: 1em; line-height: 1.6; backdrop-filter: blur(12px) saturate(1.5); transition: opacity 0.25s cubic-bezier(.4,0,.2,1); font-weight: 400; text-shadow: 0 1px 2px rgba(255,255,255,0.2); box-sizing: border-box; }
+    #devTooltip { display: block; opacity: 0; pointer-events: none; position: absolute; top: 28px; right: 0; width: 340px; background: rgba(255,255,255,0.35); color: #222; border: 1px solid #e67e22; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); padding: 18px 20px; z-index: 1000; font-size: 1em; line-height: 1.6; backdrop-filter: blur(12px) saturate(1.5); transition: opacity 0.25s cubic-bezier(.4,0,.2,1); font-weight: 400; text-shadow: 0 1px 2px rgba(255,255,255,0.2); box-sizing: border-box; }
     .devWrapper.show #devTooltip { opacity: 1; pointer-events: auto; }
     #devTooltip b { color: #0074d9; font-weight: 600; }
     #devTooltip ul { padding-left: 18px; margin: 8px 0 0 0; }
     #devTooltip li { margin-bottom: 7px; font-size: 0.98em; }
     #devTooltip .note { color: #005fa3; font-size: 0.97em; margin-top: 10px; display: block; }
-    body.glass {
-      background: rgba(255,255,255,0.35) !important;
-      backdrop-filter: blur(16px) saturate(1.5) !important;
-      border-radius: 18px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-      border: 1.5px solid #b3d8ff;
-    }
-    body.normal {
-      background: #f4f6fa !important;
-      backdrop-filter: none !important;
-      border-radius: 0;
-      box-shadow: none;
-      border: none;
-    }
-    #themeToggleBtn {
-      display:inline-block;
-      background:rgba(255,255,255,0.45);
-      border-radius:8px;
-      padding:4px 12px;
-      font-size:1em;
-      margin-left:8px;
-      cursor:pointer;
-      border:1px solid #b3d8ff;
-      color:#0074d9;
-      transition:background 0.2s,color 0.2s;
-      user-select:none;
-    }
-    #themeToggleBtn.active {
-      background:rgba(255,255,255,0.85);
-      color:#222;
-      border:1.5px solid #0074d9;
-    }
-    #densitySliderWrap { margin: 8px 0 12px 10px; }
-    #densitySlider {
-      accent-color: #e74c3c;
-      background: linear-gradient(90deg,#e74c3c 0%,#f1c40f 50%,#2ecc40 100%);
-      border-radius: 8px;
-      height: 4px;
-      outline: none;
-      margin: 0 8px;
-    }
-    #densitySlider::-webkit-slider-thumb {
-      width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #0074d9; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer;
-    }
-    #densitySlider::-moz-range-thumb {
-      width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #0074d9; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer;
-    }
-    #densitySlider::-ms-thumb {
-      width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #0074d9; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer;
-    }
-    #densitySlider::-webkit-slider-thumb:hover { border-color: #e74c3c; }
-    #densitySlider::-moz-range-thumb:hover { border-color: #e74c3c; }
-    #densitySlider::-ms-thumb:hover { border-color: #e74c3c; }
   </style>
 </head>
 <body>
@@ -143,21 +91,11 @@
           <span style="color:#888;">If you break something, reload the original files or ask for help!</span>
         </span>
       </span>
-      <label id="themeToggleLabel" title="Toggle theme">
-        <input type="checkbox" id="themeToggle" style="display:none;">
-        <span id="themeToggleBtn">🟢 Glass</span>
-      </label>
     </div>
   </div>
   <div style="margin-bottom:10px;">
     <button id="toggleTracking">Tracking: <span id="trackingStatus">ON</span></button>
     <button id="toggleRealtime">Realtime Summary: <span id="realtimeStatus">ON</span></button>
-  </div>
-  <div id="densitySliderWrap">
-    <label for="densitySlider" style="font-size:0.98em;color:#0074d9;font-weight:500;">Summary Detail:</label>
-    <input type="range" min="0" max="2" value="0" id="densitySlider" style="width:120px;vertical-align:middle;">
-    <span id="densityLabel" style="margin-left:8px;font-weight:bold;color:#e74c3c;">High</span>
-    <span style="margin-left:8px;font-size:0.95em;color:#888;">(Red: High, Yellow: Medium, Green: Low)</span>
   </div>
   <button id="openTimeline">Open Timeline</button>
   <button id="clear">Clear All</button>

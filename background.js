@@ -181,4 +181,232 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
     activeTabId = null;
     activeTabStart = null;
   }
+});
+
+// Hierarchical summarization system
+const SUMMARY_LEVELS = {
+  LEVEL_0: 0, // Individual page entries
+  LEVEL_1: 1, // Summary of 10 Level 0 entries
+  LEVEL_2: 2, // Summary of 10 Level 1 summaries
+  LEVEL_3: 3  // Summary of 10 Level 2 summaries
+};
+
+const ENTRIES_PER_SUMMARY = 10;
+
+// Initialize hierarchical storage structure
+function initializeHierarchicalStorage() {
+  chrome.storage.local.get({
+    hierarchicalData: {
+      level0: [], // Individual page entries
+      level1: [], // Level 1 summaries
+      level2: [], // Level 2 summaries  
+      level3: []  // Level 3 summaries
+    }
+  }, (result) => {
+    if (!result.hierarchicalData) {
+      chrome.storage.local.set({
+        hierarchicalData: {
+          level0: [],
+          level1: [],
+          level2: [],
+          level3: []
+        }
+      });
+    }
+  });
+}
+
+// Add new page entry and trigger hierarchical summarization
+async function addPageToHierarchy(pageData) {
+  const storage = await new Promise(resolve => {
+    chrome.storage.local.get({
+      hierarchicalData: {
+        level0: [],
+        level1: [],
+        level2: [],
+        level3: []
+      }
+    }, resolve);
+  });
+
+  const data = storage.hierarchicalData;
+  
+  // Add to Level 0 (individual entries)
+  data.level0.push({
+    ...pageData,
+    level: SUMMARY_LEVELS.LEVEL_0,
+    timestamp: Date.now(),
+    timeRange: {
+      start: new Date(pageData.timestamp).toISOString(),
+      end: new Date(pageData.timestamp).toISOString()
+    }
+  });
+
+  // Check if we need to trigger Level 1 summarization
+  if (data.level0.length % ENTRIES_PER_SUMMARY === 0) {
+    await triggerLevelSummarization(SUMMARY_LEVELS.LEVEL_1, data);
+  }
+
+  // Save updated data
+  chrome.storage.local.set({ hierarchicalData: data });
+}
+
+// Trigger summarization for a specific level
+async function triggerLevelSummarization(level, data) {
+  const sourceLevel = level - 1;
+  const sourceKey = `level${sourceLevel}`;
+  const targetKey = `level${level}`;
+  
+  // Get the last 10 entries from source level
+  const entriesToSummarize = data[sourceKey].slice(-ENTRIES_PER_SUMMARY);
+  
+  if (entriesToSummarize.length === 0) return;
+
+  // Create summary content
+  const summaryContent = createSummaryContent(entriesToSummarize, level);
+  
+  // Get API key
+  const apiKey = await getApiKey();
+  if (!apiKey) {
+    console.log('No API key available for summarization');
+    return;
+  }
+
+  try {
+    const summary = await generateSummary(summaryContent, level);
+    
+    // Create time range
+    const timeRange = {
+      start: entriesToSummarize[0].timeRange.start,
+      end: entriesToSummarize[entriesToSummarize.length - 1].timeRange.end
+    };
+
+    // Add summary to target level
+    data[targetKey].push({
+      level: level,
+      timestamp: Date.now(),
+      timeRange: timeRange,
+      summary: summary,
+      entryCount: entriesToSummarize.length,
+      sourceEntries: entriesToSummarize.map(entry => ({
+        id: entry.timestamp,
+        title: entry.title || entry.summary || 'Untitled'
+      }))
+    });
+
+    // Check if we need to trigger next level summarization
+    if (data[targetKey].length % ENTRIES_PER_SUMMARY === 0 && level < SUMMARY_LEVELS.LEVEL_3) {
+      await triggerLevelSummarization(level + 1, data);
+    }
+
+  } catch (error) {
+    console.error(`Error generating Level ${level} summary:`, error);
+  }
+}
+
+// Create summary content based on level
+function createSummaryContent(entries, level) {
+  if (level === SUMMARY_LEVELS.LEVEL_1) {
+    // Summarize individual page entries
+    return entries.map(entry => 
+      `Title: ${entry.title || 'No Title'}\nURL: ${entry.url}\nContent: ${entry.bodyText || entry.summary || 'No content'}\n`
+    ).join('\n---\n');
+  } else {
+    // Summarize existing summaries
+    return entries.map(entry => 
+      `Time Period: ${new Date(entry.timeRange.start).toLocaleDateString()} - ${new Date(entry.timeRange.end).toLocaleDateString()}\nSummary: ${entry.summary}\n`
+    ).join('\n---\n');
+  }
+}
+
+// Generate summary using OpenAI API
+async function generateSummary(content, level) {
+  const apiKey = await getApiKey();
+  if (!apiKey) return 'No API key available';
+
+  const levelDescriptions = {
+    [SUMMARY_LEVELS.LEVEL_1]: 'recent browsing activity',
+    [SUMMARY_LEVELS.LEVEL_2]: 'browsing sessions',
+    [SUMMARY_LEVELS.LEVEL_3]: 'browsing periods'
+  };
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a helpful assistant that creates hierarchical summaries of ${levelDescriptions[level]}. Provide concise, informative summaries that capture the main themes and activities.`
+        },
+        {
+          role: 'user',
+          content: `Please summarize the following ${levelDescriptions[level]}:\n\n${content}`
+        }
+      ],
+      max_tokens: level === SUMMARY_LEVELS.LEVEL_1 ? 300 : 200
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('OpenAI API error');
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || 'No summary generated';
+}
+
+// Get hierarchical data for a specific level
+async function getHierarchicalData(level = SUMMARY_LEVELS.LEVEL_0) {
+  const storage = await new Promise(resolve => {
+    chrome.storage.local.get({
+      hierarchicalData: {
+        level0: [],
+        level1: [],
+        level2: [],
+        level3: []
+      }
+    }, resolve);
+  });
+
+  return storage.hierarchicalData[`level${level}`] || [];
+}
+
+// Update the existing scrapeAndSummarize function to use hierarchical system
+async function scrapeAndSummarize(tab) {
+  // ... existing scraping code ...
+  
+  const pageData = {
+    title: tab.title,
+    url: tab.url,
+    bodyText: bodyText,
+    timestamp: Date.now()
+  };
+
+  // Add to hierarchical system instead of flat storage
+  await addPageToHierarchy(pageData);
+  
+  // Also maintain backward compatibility with existing flat storage
+  chrome.storage.local.get({ scrapedPages: [] }, (result) => {
+    const pages = result.scrapedPages;
+    pages.push(pageData);
+    chrome.storage.local.set({ scrapedPages: pages });
+  });
+}
+
+// Initialize hierarchical storage when extension loads
+initializeHierarchicalStorage();
+
+// Message handler for timeline page
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'getHierarchicalData') {
+    getHierarchicalData(request.level).then(data => {
+      sendResponse({ data: data });
+    });
+    return true; // Keep message channel open for async response
+  }
 }); 

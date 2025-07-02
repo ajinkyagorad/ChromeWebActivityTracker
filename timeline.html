@@ -4,18 +4,104 @@
   <meta charset="UTF-8">
   <title>Browsing Timeline</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f6fa; margin: 0; padding: 0; }
-    h1 { text-align: center; margin: 20px 0; }
-    .timeline { position: relative; max-width: 800px; margin: 30px auto; }
+    body { 
+      font-family: 'Segoe UI', Arial, sans-serif; 
+      background: rgba(255,255,255,0.35);
+      backdrop-filter: blur(18px) saturate(1.5);
+      margin: 0; 
+      padding: 20px;
+      min-height: 100vh;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      border: 1.5px solid #b3d8ff;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      background: rgba(255,255,255,0.45);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+      backdrop-filter: blur(12px);
+    }
+    
+    h1 { 
+      margin: 0 0 20px 0; 
+      color: #0074d9;
+      font-size: 2.2em;
+      font-weight: 600;
+    }
+    
+    .level-selector {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .level-btn {
+      background: rgba(255,255,255,0.45);
+      border: 2px solid #b3d8ff;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #0074d9;
+      font-weight: 500;
+      backdrop-filter: blur(8px);
+    }
+    
+    .level-btn:hover {
+      background: rgba(255,255,255,0.7);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    
+    .level-btn.active {
+      background: #0074d9;
+      color: white;
+      border-color: #0074d9;
+      box-shadow: 0 4px 16px rgba(0,116,217,0.3);
+    }
+    
+    .level-info {
+      text-align: center;
+      color: #666;
+      font-size: 0.95em;
+      margin-bottom: 10px;
+    }
+    
+    .timeline { 
+      position: relative; 
+      max-width: 900px; 
+      margin: 0 auto;
+      background: rgba(255,255,255,0.25);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+      backdrop-filter: blur(12px);
+    }
+    
     .node {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      background: rgba(255,255,255,0.45);
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
       margin: 20px 0;
-      padding: 18px 24px;
+      padding: 20px 24px;
       position: relative;
       border-left: 6px solid #0074d9;
+      backdrop-filter: blur(8px);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
+    
+    .node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+    
     .node:before {
       content: '';
       position: absolute;
@@ -28,18 +114,107 @@
       border: 3px solid #fff;
       box-shadow: 0 0 0 2px #0074d9;
     }
-    .timestamp { color: #888; font-size: 0.95em; margin-bottom: 6px; }
-    .title { font-size: 1.15em; font-weight: bold; color: #0074d9; }
-    .url { font-size: 0.95em; color: #333; word-break: break-all; margin-bottom: 6px; }
-    .summary { margin: 10px 0; color: #222; font-size: 1em; }
-    .details { font-size: 0.95em; color: #444; background: #f8f8f8; border-radius: 4px; padding: 8px; margin-top: 8px; }
-    .time-spent { color: #555; font-size: 0.95em; margin-top: 4px; }
-    .empty { text-align: center; color: #aaa; margin-top: 60px; }
+    
+    .node.level-1:before { background: #e74c3c; box-shadow: 0 0 0 2px #e74c3c; }
+    .node.level-2:before { background: #f39c12; box-shadow: 0 0 0 2px #f39c12; }
+    .node.level-3:before { background: #27ae60; box-shadow: 0 0 0 2px #27ae60; }
+    
+    .time-range {
+      color: #0074d9;
+      font-size: 0.9em;
+      font-weight: 500;
+      margin-bottom: 8px;
+      background: rgba(0,116,217,0.1);
+      padding: 6px 12px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+    
+    .timestamp { 
+      color: #888; 
+      font-size: 0.9em; 
+      margin-bottom: 8px; 
+    }
+    
+    .title { 
+      font-size: 1.2em; 
+      font-weight: bold; 
+      color: #0074d9; 
+      margin-bottom: 8px;
+    }
+    
+    .url { 
+      font-size: 0.9em; 
+      color: #666; 
+      word-break: break-all; 
+      margin-bottom: 8px; 
+    }
+    
+    .summary { 
+      margin: 12px 0; 
+      color: #222; 
+      font-size: 1em;
+      line-height: 1.6;
+      background: rgba(255,255,255,0.3);
+      padding: 12px;
+      border-radius: 8px;
+    }
+    
+    .entry-count {
+      color: #0074d9;
+      font-size: 0.85em;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    
+    .details { 
+      font-size: 0.9em; 
+      color: #444; 
+      background: rgba(255,255,255,0.4); 
+      border-radius: 8px; 
+      padding: 12px; 
+      margin-top: 12px; 
+    }
+    
+    .time-spent { 
+      color: #555; 
+      font-size: 0.9em; 
+      margin-top: 8px; 
+    }
+    
+    .empty { 
+      text-align: center; 
+      color: #888; 
+      margin-top: 60px;
+      font-size: 1.1em;
+    }
+    
+    .loading {
+      text-align: center;
+      color: #0074d9;
+      margin: 40px 0;
+      font-size: 1.1em;
+    }
   </style>
 </head>
 <body>
-  <h1>Browsing Timeline</h1>
-  <div class="timeline" id="timeline"></div>
+  <div class="header">
+    <h1>📊 Hierarchical Browsing Timeline</h1>
+    <div class="level-selector">
+      <button class="level-btn active" data-level="0">Level 0: Individual Pages</button>
+      <button class="level-btn" data-level="1">Level 1: Page Summaries</button>
+      <button class="level-btn" data-level="2">Level 2: Session Summaries</button>
+      <button class="level-btn" data-level="3">Level 3: Period Summaries</button>
+    </div>
+    <div class="level-info" id="levelInfo">
+      Viewing individual page entries (raw browsing history)
+    </div>
+  </div>
+  
+  <div class="timeline" id="timeline">
+    <div class="loading">Loading timeline data...</div>
+  </div>
+  
   <script src="timeline.js"></script>
 </body>
 </html> 
