@@ -1,0 +1,22 @@
+# Node modules and logs
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# Chrome extension build artifacts
+*.crx
+*.pem
+
+# VSCode settings
+.vscode/
+
+# Misc
+*.swp 

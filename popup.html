@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Page Text Scraper</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0; padding: 0;
+      width: 370px;
+      background: rgba(255,255,255,0.35);
+      backdrop-filter: blur(16px) saturate(1.5);
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      border: 1.5px solid #b3d8ff;
+      min-height: 540px;
+    }
+    h2 { margin: 18px 0 10px 0; text-align: left; color: #0074d9; }
+    #header { display: flex; align-items: center; justify-content: space-between; margin: 0 0 10px 0; padding: 10px 16px 0 16px; }
+    .infoWrapper { position: relative; display: inline-block; }
+    #infoIcon { font-size: 1.3em; color: #0074d9; cursor: pointer; margin-left: 8px; user-select: none; transition: color 0.2s; }
+    #infoIcon:focus { outline: none; color: #005fa3; }
+    #infoTooltip { display: block; opacity: 0; pointer-events: none; position: absolute; top: 28px; right: 0; width: 320px; background: rgba(255,255,255,0.35); color: #222; border: 1px solid #b3d8ff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); padding: 18px 20px; z-index: 100; font-size: 1em; line-height: 1.6; backdrop-filter: blur(12px) saturate(1.5); transition: opacity 0.25s cubic-bezier(.4,0,.2,1); font-weight: 400; text-shadow: 0 1px 2px rgba(255,255,255,0.2); box-sizing: border-box; }
+    .infoWrapper.show #infoTooltip { opacity: 1; pointer-events: auto; }
+    #infoTooltip b { color: #0074d9; font-weight: 600; }
+    #infoTooltip ul { padding-left: 18px; margin: 8px 0 0 0; }
+    #infoTooltip li { margin-bottom: 7px; font-size: 0.98em; }
+    #infoTooltip .note { color: #005fa3; font-size: 0.97em; margin-top: 10px; display: block; }
+    #toggleTracking, #toggleRealtime { background: #d4f7d4; border: none; border-radius: 6px; padding: 7px 16px; font-size: 1em; cursor: pointer; margin-bottom: 8px; transition: background 0.2s; margin-right: 8px; }
+    #toggleTracking[off], #toggleRealtime[off] { background: #f7d4d4; }
+    #clear, #summarize, #openTimeline { background: #0074d9; color: #fff; border: none; border-radius: 6px; padding: 7px 16px; font-size: 1em; cursor: pointer; margin-right: 8px; margin-bottom: 8px; transition: background 0.2s; }
+    #clear:hover, #summarize:hover, #openTimeline:hover { background: #005fa3; }
+    #pages { max-height: 260px; overflow-y: auto; background: rgba(255,255,255,0.45); border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 10px; margin-bottom: 10px; }
+    .page { border-bottom: 1px solid #e0e0e0; margin-bottom: 10px; padding-bottom: 10px; display: flex; align-items: flex-start; justify-content: space-between; }
+    .page-content { flex: 1; }
+    .title { font-weight: bold; color: #0074d9; }
+    .url { font-size: 0.93em; color: #0074d9; word-break: break-all; max-width: 180px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: bottom; }
+    .timestamp { font-size: 0.85em; color: #888; }
+    .snippet { margin-top: 5px; font-size: 0.97em; color: #333; }
+    .crossout-btn { background: none; border: none; color: #e74c3c; font-size: 1.2em; cursor: pointer; margin-left: 8px; margin-top: 2px; transition: color 0.2s; }
+    .crossout-btn:hover { color: #c0392b; }
+    #summary { margin-top: 20px; padding: 12px; background: rgba(255,255,255,0.45); border: 1px solid #ccc; border-radius: 8px; display: none; font-size: 1em; color: #222; }
+    #settings { background: rgba(255,255,255,0.45); border-radius: 10px; padding: 12px 16px; margin: 10px 10px 0 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+    #settings label { font-size: 0.98em; color: #0074d9; font-weight: 500; }
+    #apiKeyInput { width: 80%; padding: 6px 8px; border-radius: 6px; border: 1px solid #b3d8ff; margin-right: 8px; font-size: 1em; }
+    #saveApiKey { background: #0074d9; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 1em; cursor: pointer; transition: background 0.2s; }
+    #saveApiKey:hover { background: #005fa3; }
+    #settings-status { font-size: 0.95em; color: #0074d9; margin-left: 8px; }
+    .devWrapper { position: relative; display: inline-block; margin-left: 8px; }
+    #devIcon { font-size: 1.3em; color: #888; cursor: pointer; user-select: none; transition: color 0.2s; }
+    #devIcon:focus { outline: none; color: #e67e22; }
+    #devTooltip { display: block; opacity: 0; pointer-events: none; position: absolute; top: 28px; right: 0; width: 340px; background: rgba(255,255,255,0.35); color: #222; border: 1px solid #e67e22; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.13); padding: 18px 20px; z-index: 100; font-size: 1em; line-height: 1.6; backdrop-filter: blur(12px) saturate(1.5); transition: opacity 0.25s cubic-bezier(.4,0,.2,1); font-weight: 400; text-shadow: 0 1px 2px rgba(255,255,255,0.2); box-sizing: border-box; }
+    .devWrapper.show #devTooltip { opacity: 1; pointer-events: auto; }
+    #devTooltip b { color: #0074d9; font-weight: 600; }
+    #devTooltip ul { padding-left: 18px; margin: 8px 0 0 0; }
+    #devTooltip li { margin-bottom: 7px; font-size: 0.98em; }
+    #devTooltip .note { color: #005fa3; font-size: 0.97em; margin-top: 10px; display: block; }
+    body.glass {
+      background: rgba(255,255,255,0.35) !important;
+      backdrop-filter: blur(16px) saturate(1.5) !important;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      border: 1.5px solid #b3d8ff;
+    }
+    body.normal {
+      background: #f4f6fa !important;
+      backdrop-filter: none !important;
+      border-radius: 0;
+      box-shadow: none;
+      border: none;
+    }
+    #themeToggleBtn {
+      display:inline-block;
+      background:rgba(255,255,255,0.45);
+      border-radius:8px;
+      padding:4px 12px;
+      font-size:1em;
+      margin-left:8px;
+      cursor:pointer;
+      border:1px solid #b3d8ff;
+      color:#0074d9;
+      transition:background 0.2s,color 0.2s;
+      user-select:none;
+    }
+    #themeToggleBtn.active {
+      background:rgba(255,255,255,0.85);
+      color:#222;
+      border:1.5px solid #0074d9;
+    }
+    #densitySliderWrap { margin: 8px 0 12px 10px; }
+    #densitySlider {
+      accent-color: #e74c3c;
+      background: linear-gradient(90deg,#e74c3c 0%,#f1c40f 50%,#2ecc40 100%);
+      border-radius: 8px;
+      height: 4px;
+      outline: none;
+      margin: 0 8px;
+    }
+    #densitySlider::-webkit-slider-thumb {
+      width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #0074d9; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer;
+    }
+    #densitySlider::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #0074d9; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer;
+    }
+    #densitySlider::-ms-thumb {
+      width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #0074d9; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer;
+    }
+    #densitySlider::-webkit-slider-thumb:hover { border-color: #e74c3c; }
+    #densitySlider::-moz-range-thumb:hover { border-color: #e74c3c; }
+    #densitySlider::-ms-thumb:hover { border-color: #e74c3c; }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <h2>Scraped Pages</h2>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="infoWrapper" id="infoWrapper">
+        <span id="infoIcon" tabindex="0">&#8505;</span>
+        <span id="infoTooltip">
+          <b>How to Use Browser History Timeline Extension</b>
+          <ul>
+            <li><b>Enable Tracking:</b> Make sure <b>Tracking</b> is ON in the popup. The extension will automatically log and summarize every page you visit.</li>
+            <li><b>View Timeline:</b> Click <b>Open Timeline</b> below to see a detailed, chronological timeline of your browsing, including summaries, time spent, and page details.</li>
+            <li><b>Toggle Tracking:</b> Use the <b>Tracking ON/OFF</b> button in the popup to pause or resume logging at any time.</li>
+            <li><b>Clear Data:</b> Use the <b>Clear All</b> button in the popup to erase your browsing log.</li>
+            <li><b>Summarize Manually:</b> Use the <b>Summarize</b> button to get a summary of your recent browsing activity (optional).</li>
+          </ul>
+          <span class="note"><b>Note:</b> Your data is stored locally and never leaves your device except for summary generation via OpenAI.</span>
+        </span>
+      </span>
+      <span class="devWrapper" id="devWrapper">
+        <span id="devIcon" tabindex="0" title="Developer Mode">&#128295;</span>
+        <span id="devTooltip">
+          <b>🛠️ How to Edit This Extension (Developer Mode)</b><br>
+          <span style="color:#e74c3c;"><b>Warning:</b> For developer-friendly users only!</span><br><br>
+          <ol style="margin-left:18px;">
+            <li>Locate the extension folder on your computer.</li>
+            <li>Open it in <b>Cursor</b> (or your favorite code editor).</li>
+            <li>Edit any file (HTML, JS, CSS, manifest, etc.).</li>
+            <li>Reload the extension in <b>chrome://extensions/</b>.</li>
+            <li>Test your changes in Chrome.</li>
+          </ol>
+          <span style="color:#888;">If you break something, reload the original files or ask for help!</span>
+        </span>
+      </span>
+      <label id="themeToggleLabel" title="Toggle theme">
+        <input type="checkbox" id="themeToggle" style="display:none;">
+        <span id="themeToggleBtn">🟢 Glass</span>
+      </label>
+    </div>
+  </div>
+  <div style="margin-bottom:10px;">
+    <button id="toggleTracking">Tracking: <span id="trackingStatus">ON</span></button>
+    <button id="toggleRealtime">Realtime Summary: <span id="realtimeStatus">ON</span></button>
+  </div>
+  <div id="densitySliderWrap">
+    <label for="densitySlider" style="font-size:0.98em;color:#0074d9;font-weight:500;">Summary Detail:</label>
+    <input type="range" min="0" max="2" value="0" id="densitySlider" style="width:120px;vertical-align:middle;">
+    <span id="densityLabel" style="margin-left:8px;font-weight:bold;color:#e74c3c;">High</span>
+    <span style="margin-left:8px;font-size:0.95em;color:#888;">(Red: High, Yellow: Medium, Green: Low)</span>
+  </div>
+  <button id="openTimeline">Open Timeline</button>
+  <button id="clear">Clear All</button>
+  <button id="summarize">Summarize</button>
+  <div id="pages"></div>
+  <div id="summary"></div>
+  <div id="settings">
+    <label for="apiKeyInput">OpenAI API Key:</label><br>
+    <input type="password" id="apiKeyInput" placeholder="sk-..." autocomplete="off" />
+    <button id="saveApiKey">Save</button>
+    <span id="settings-status"></span>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html> 
